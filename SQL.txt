@@ -16,24 +16,29 @@ FROM employees;
 
 select * from employees where JOB_ID <talbe1> IN (select JOB_IDENT from jobs <table2> where JOB_TITLE= 'Jr. Designer');
 
-Multitables with implicit join
+Multitables
+
+Implicit Join
+
 SELECT * FROM <table1> A, <table2> B
 WHERE <A.column1> = <B.column2>;    #A, B are short aliases for faster input, can use whole name
 
+view is an alternative way of representing data that exists in one or more tables,
+are fields from one or more real tables in the database
 
-Pros of using Cloud DB
-# - ease of use, users can access Cloud databases from virtually anywhere using a vendor's API or web interface
-# - Scalability. Cloud databases can expand and shrink their storage and compute capacities during runtime to accommodate changing needs and usage demands, so organizations only pay for what they actually use
-# - Disaster recovery. In the event of a natural disaster or equipment failure or power outage, data is kept secure through backups on Remote Servers on Cloud in geographically distributed regions
+CREATE VIEW view_name AS
+SELECT column1, column2, ...
+FROM table_name
+WHERE condition;
 
 
 Data Manipulation Language (DML) statements are used to read and modify data in tables. These are also sometimes referred to as CRUD operations,
 that is, Create, Read, Update and Delete rows in a table. Common DML statement types include INSERT, SELECT, UPDATE, and DELETE
 
-SELECT *(all) / column1, column2,
+1.1 SELECT *(all) / column1, column2,
 FROM table_name
 
-WHERE <COL> e.g. LIKE "A%" / Range / ... or ... equivalent to <COL> in ("value", "value")#String pattern, returns when <COL> starts with A
+1.2 WHERE <COL> e.g. LIKE "A%" / Range / ... or ... equivalent to <COL> in ("value", "value")#String pattern, returns when <COL> starts with A
 # NOT LIKE
 # "%A% anywhere in <COL>
 # "__A%" starts with 3rd position
@@ -41,33 +46,30 @@ WHERE <COL> e.g. LIKE "A%" / Range / ... or ... equivalent to <COL> in ("value",
 
 sub-queries to evaluate agg func
 
-
-ORDER BY <COL1> DESC, <COL2> #ordered in descending order by <COL1> & within order by <COL2> in ASEC
+1.3 ORDER BY <COL1> DESC, <COL2> #ordered in descending order by <COL1> & within order by <COL2> in ASEC
 # can use number 1, 2, 3 to specify which col if multiple col called
 
-GROUP BY <COL>
+1.4 GROUP BY <COL>
 SELECT DEP_ID, COUNT(*) AS "NUM_EMPLOYEES", AVG(SALARY) AS "AVG_SALARY"
 FROM EMPLOYEES
 GROUP BY DEP_ID;
 
-HAVING <PREDICATE> #ONLY WORKS FOR GROUP BY, unlike where clause works for whole result set
+1.4.1 HAVING <PREDICATE> #ONLY WORKS FOR GROUP BY, unlike where clause works for whole result set
 
-COUNT()
+1.5 COUNT()
 SELECT COUNT(*) from FilmLocations where ReleaseYear < 1950;
 
-DISTINCT    #retrieve unique value
+1.6 DISTINCT    #retrieve unique value
 SELECT COUNT(DISTINCT ReleaseYear) FROM FilmLocations WHERE ProductionCompany="Warner Bros. Pictures";
 
-LIMIT #similar to .head()
+1.7LIMIT #similar to .head()
 SELECT * FROM FilmLocations LIMIT 15 OFFSET 10; #retrieve first 15 rows starting from 11th row
 
+1.8
 INSERT INTO <tablename> VALUES
 ("xx" , "XX", ...),    #first row
 ("xx", "XX", ...), ...    #2nd row
 
-UPDATE <Table>  #change variable
-SET <Column = "xx">, ...
-WHERE <Predicate>
 
 DELETE from <Table> WHERE <Predicate>
 
@@ -76,7 +78,7 @@ DELETE from <Table> WHERE <Predicate>
 Data Definition Language (DDL) statements are used to define, change, or drop database objects such as tables
 Common DDL statement types include CREATE, ALTER, TRUNCATE, and DROP
 
-CREATE
+2.1 CREATE
 CREATE TABLE Student(Name VARCHAR(20) PRIMARY KEY NOT NULL,
                     Gender CHAR(6)); # Primary Keys  constraint uniquely identifies each record in a table, can help speed up your queries significantly
 INSERT into Student VALUES('Herry', 'Male');
@@ -86,32 +88,38 @@ SELECT LENGTH(Name) FROM Student;
 # VAR() used when data values is of fixed length(size), if less than fixed length padded with extra memory space
 # varchar(60) used when data values is of var length(size), w/o padded extra space, performance not as good as CHAR()
 
-ALTER #change str of existing table e.g. add, modify, drop
+2.2 ALTER #change str of existing table e.g. add, modify, drop
 
+2.2.1
 ALTER <table>
 ADD <column> <dtype> column_constraint;     #ADD COLUMN
 
+2.2.2
 #then add in new data
 UPDATE <table> SET <column=xx> WHERE <predicate>
 
+2.2.3
 ALTER <table>
 DROP <column>;    #del col
 
+2.2.4
 ALTER <table>
 ALTER <column> SET <dtype>;   #alter col dtype
 
+2.2.5
 ALTER <table>
 RENAME <column> current_column_name TO new_column_name;   #rename col name
 
-
+2.3
 DROP <table>
 # del all data and table
 
+2.4
 TRUNCATE <table>
     IMMEDIATE:\;
 # del all data but keep table
 
-
+3.1
 DB-API
 Python lib for different DB systems
 IBM Db2: ibm_db
@@ -122,13 +130,14 @@ MongoDB: PyMongo
 Connection Objects for DB connections and Manage transaction
 Connecton = connect("db_name", "userid","pwd")
 
-
+3.2
 Cursor Objects for DB queries, scroll thru result set and retrieve results
 Cursor = Connection.cursor()
 Connection.commit()
 Connection.rollback()
 Connection.close()
 
+3.3
 Cursor.callproc()
 CUrsor.execute("select * from <table>")
 .executemany()
