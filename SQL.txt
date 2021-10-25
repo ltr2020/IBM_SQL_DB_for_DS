@@ -26,9 +26,9 @@ WHERE <A.column1> = <B.column2>;    #A, B are short aliases for faster input, ca
 view is an alternative way of representing data that exists in one or more tables,
 are fields from one or more real tables in the database
 
-CREATE VIEW view_name AS
+CREATE or REPLACE VIEW view_name AS
 SELECT column1, column2, ...
-FROM table_name
+FROM table_1, table_2
 WHERE condition;
 
 
@@ -153,3 +153,41 @@ port": 30367
 "hostname": "815fa4db-dc03-4c70-869a-a9cc13f33084.bs2io90l08kqb1od8lcg.databases.appdomain.cloud"
 "password": "juFr8vgUo7ILSTyg",
 "username": "ylg89839"
+
+
+4. Store Procedures
+4.1 Create "RETRIEVE ALL" routine
+--#SET TERMINATOR @
+CREATE PROCEDURE UPDATE_SALEPRICE (
+    IN Animal_ID INTEGER, IN Animal_Health VARCHAR(5) )     -- ( { IN/OUT type } { parameter-name } { data-type }, ... )
+
+LANGUAGE SQL                                                -- Language used in this routine
+MODIFIES SQL DATA                                           -- This routine will only write/modify data in the table
+
+BEGIN
+
+    IF Animal_Health = 'BAD' THEN                           -- Start of conditional statement
+        UPDATE PETSALE
+        SET SALEPRICE = SALEPRICE - (SALEPRICE * 0.25)
+        WHERE ID = Animal_ID;
+
+    ELSEIF Animal_Health = 'WORSE' THEN
+        UPDATE PETSALE
+        SET SALEPRICE = SALEPRICE - (SALEPRICE * 0.5)
+        WHERE ID = Animal_ID;
+
+    ELSE
+        UPDATE PETSALE
+        SET SALEPRICE = SALEPRICE
+        WHERE ID = Animal_ID;
+
+    END IF;                                                 -- End of conditional statement
+
+END
+@                                                           -- Routine termination character
+
+4.2 Call
+CALL RETRIEVE_ALL;      -- Caller query
+
+4.3 Drop
+DROP PROCEDURE RETRIEVE_ALL;
