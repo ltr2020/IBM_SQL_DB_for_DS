@@ -3,7 +3,7 @@ DB Function
 - ROUND(), LENGTH(), uCASE(), LCASE
 - YEAR(), MONTH(), DAY(), DAYOFMONTH(), DAYOFWEEK(), DAYOFYEAR(), WEEK(), HOUR(), MINUTE(), SECOND()
 
-Overcome limitations of agg func by sub-queries and nested selects
+0.1 Overcome limitations of agg func by sub-queries and nested selects
 
 Sub-queries & nested selects    # can be used when multi tables
 SELECT EMP_ID, F_NAME, L_NAME, SALARY
@@ -14,20 +14,47 @@ WHERE SALARY < (select AVG(SALARY)  #here
 SELECT EMP_ID, SALARY, (select MAX(SALARY) FROM employees ) AS MAX_SALARY  #here
 FROM employees;
 
-select * from employees where JOB_ID <talbe1> IN (select JOB_IDENT from jobs <table2> where JOB_TITLE= 'Jr. Designer');
+select * from employees where JOB_ID <talbe1> IN/= (select JOB_IDENT from jobs <table2> where JOB_TITLE= 'Jr. Designer');
 
-Multitables
+0.2 Multitables
 
-Implicit Join
+0.2.1 Implicit Join
+- Primary key: uniquely identifies each row in a table e.g. ID no.
+- Secondary key: primary key of another table
+- can combine more than 2 tables for each SQL commands
+TABLE Borrower (
+    Borrower_ID,
+    Borrower_name,
+    ...
+    )
 
-SELECT * FROM <table1> A, <table2> B
-WHERE <A.column1> = <B.column2>;    #A, B are short aliases for faster input, can use whole name
+TABLE Loan (
+    COPY_ID,
+    Borrower_ID,
+    Loan_date
+    Return_date
+    )
 
+0.2.2
+Inner Join: only combines rows from joined tables that have a matching value in a common column
+%%SQL
+SELECT B.BORROWER_ID, B.NAME, L.BORROWER_ID, L.LOAN_DATE
+FROM BORROWER B INNER JOIN LOAN L
+ON B.BORROWER = L.BORROWER
+
+0.2.3
+left outer join (displays all the rows from the left table, and combines matching rows from the right table)
+right outer join
+full Outer join
+
+
+
+0.3
 view is an alternative way of representing data that exists in one or more tables,
 are fields from one or more real tables in the database
 
-CREATE or REPLACE VIEW view_name AS
-SELECT column1, column2, ...
+CREATE or REPLACE VIEW view_name
+AS SELECT column1, column2, ...
 FROM table_1, table_2
 WHERE condition;
 
@@ -62,7 +89,7 @@ SELECT COUNT(*) from FilmLocations where ReleaseYear < 1950;
 1.6 DISTINCT    #retrieve unique value
 SELECT COUNT(DISTINCT ReleaseYear) FROM FilmLocations WHERE ProductionCompany="Warner Bros. Pictures";
 
-1.7LIMIT #similar to .head()
+1.7 LIMIT #similar to .head()
 SELECT * FROM FilmLocations LIMIT 15 OFFSET 10; #retrieve first 15 rows starting from 11th row
 
 1.8
@@ -156,7 +183,11 @@ port": 30367
 
 
 4. Store Procedures
-4.1 Create "RETRIEVE ALL" routine
+
+4.1 Create store proceure routine
+
+--#SET TERMINATOR @
+
 --#SET TERMINATOR @
 CREATE PROCEDURE UPDATE_SALEPRICE (
     IN Animal_ID INTEGER, IN Animal_Health VARCHAR(5) )     -- ( { IN/OUT type } { parameter-name } { data-type }, ... )
@@ -186,8 +217,107 @@ BEGIN
 END
 @                                                           -- Routine termination character
 
-4.2 Call
-CALL RETRIEVE_ALL;      -- Caller query
+4.1.1 Call
+CALL UPDATE_SALEPRICE(1, 'BAD');      -- Caller query, update the sale price of animal with ID 1 having BAD health condition in the PETSALE table
 
-4.3 Drop
-DROP PROCEDURE RETRIEVE_ALL;
+4.1.2 Drop
+DROP PROCEDURE UPDATE_SALEPRICE;
+
+4.2 ACID TRANSACTION (indivisible set of SQL statements)
+- Atomic, either all happens successfully w/o errors or none
+- Consistent, data in consistent state b4 and after trans
+- Isolated, no other process can change data while trans running
+- Durable, change made by trans must persist
+
+4.2.1 Create tables
+
+
+DROP TABLE BankAccounts;
+
+CREATE TABLE BankAccounts (
+    AccountNumber VARCHAR(5) NOT NULL,
+    AccountName VARCHAR(25) NOT NULL,
+    Balance DECIMAL(8,2) CHECK(Balance>=0) NOT NULL,
+    PRIMARY KEY (AccountNumber)
+    );
+
+INSERT INTO BankAccounts VALUES
+('B001','Rose',300),
+('B002','James',1345),
+('B003','Shoe Shop',124200),
+('B004','Corner Shop',76000);
+
+SELECT * FROM BankAccounts;
+
+DROP TABLE ShoeShop
+
+CREATE TABLE ShoeShop (
+    Product VARCHAR(25) NOT NULL,
+    Stock INTEGER NOT NULL,
+    Price DECIMAL(8,2) CHECK(Price>0) NOT NULL,
+    PRIMARY KEY (Product)
+    );
+
+
+INSERT INTO ShoeShop VALUES
+('Boots',11,200),
+('High heels',8,600),
+('Brogues',10,150),
+('Trainers',14,300);
+
+SELECT * FROM ShoeShop;
+
+4.2.2 Create store procedures
+--#SET TERMINATOR @
+CREATE PROCEDURE TRANSACTION_ROSE                           -- Name of this stored procedure routine
+
+LANGUAGE SQL                                                -- Language used in this routine
+MODIFIES SQL DATA                                           -- This routine will only write/modify data in the table
+
+BEGIN
+
+        DECLARE SQLCODE INTEGER DEFAULT 0;                  -- Host variable SQLCODE of each SQL statement and assigned 0, returns negative value for error, zero for success, positive value for warning
+        DECLARE retcode INTEGER DEFAULT 0;                  -- Local variable retcode with declared and assigned 0
+        DECLARE CONTINUE HANDLER FOR SQLEXCEPTION           -- Handler tell the routine what to do when an error or warning occurs
+        SET retcode = SQLCODE;                              -- local variable retcode to catch return value of SQLCODE, since SQLCODE resets for each new SQL statements
+
+        UPDATE BankAccounts
+        SET Balance = Balance-200
+        WHERE AccountName = 'Rose';
+
+        UPDATE BankAccounts
+        SET Balance = Balance+200
+        WHERE AccountName = 'Shoe Shop';
+
+        UPDATE ShoeShop
+        SET Stock = Stock-1
+        WHERE Product = 'Boots';
+
+        UPDATE BankAccounts
+        SET Balance = Balance-300
+        WHERE AccountName = 'Rose';
+
+
+        IF retcode < 0 THEN                                  --  SQLCODE returns negative value for error, zero for success, positive value for warning
+            ROLLBACK WORK;
+
+        ELSE
+            COMMIT WORK;                                      -- only iff all trans executed successfully
+
+        END IF;
+
+END
+@                                                            -- Routine termination character
+
+4.2.3 Success?
+CALL TRANSACTION_ROSE;  -- Caller query
+
+SELECT * FROM BankAccounts;
+
+SELECT * FROM ShoeShop;
+
+transaction has been executed. But no changes permanently been saved through COMMIT.
+All cahnges undone through ROLLBACK since the whole transaction fails
+due to the failure of a SQL statement or more
+    - After buying of "Boots", Rose bank balance= 300-200 =100, Shop Shop = 124,200+200 = 124,400 and stock = 11-1 =10
+    - insuff to buy another pair of trainers of $300--> fails
