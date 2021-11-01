@@ -58,7 +58,6 @@ AS SELECT column1, column2, ...
 FROM table_1, table_2
 WHERE condition;
 
-
 Data Manipulation Language (DML) statements are used to read and modify data in tables. These are also sometimes referred to as CRUD operations,
 that is, Create, Read, Update and Delete rows in a table. Common DML statement types include INSERT, SELECT, UPDATE, and DELETE
 
@@ -184,9 +183,7 @@ port": 30367
 
 4. Store Procedures
 
-4.1 Create store proceure routine
-
---#SET TERMINATOR @
+4.1 Create store procedure routine
 
 --#SET TERMINATOR @
 CREATE PROCEDURE UPDATE_SALEPRICE (
@@ -308,6 +305,7 @@ BEGIN
 
 END
 @                                                            -- Routine termination character
+--#SET TERMINATOR ;
 
 4.2.3 Success?
 CALL TRANSACTION_ROSE;  -- Caller query
